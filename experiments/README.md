@@ -67,7 +67,6 @@ Alternative: Xcode. This is the way I developed everything, and should "just wor
 ### Python Code:
 - [Joblib](https://github.com/joblib/joblib) - for caching function output
 - [Scikit-learn](https://github.com/scikit-learn/scikit-learn) - for k-means
-- [Kmc2](https://github.com/obachem/kmc2) - for k-means seeding
 - [Pandas](http://pandas.pydata.org) - for storing results and reading in data
 - [Seaborn](https://github.com/mwaskom/seaborn) - for plotting, if you want to reproduce our figures
 

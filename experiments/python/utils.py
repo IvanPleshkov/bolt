@@ -6,8 +6,6 @@ from sklearn import cluster
 from scipy import signal
 # import types
 
-import kmc2  # state-of-the-art kmeans initialization (as of NIPS 2016)
-
 from joblib import Memory
 _memory = Memory('.', verbose=0)
 
@@ -173,8 +171,10 @@ def knn(X, q, k, dist_func=dists_sq):
 
 
 @_memory.cache
-def kmeans(X, k, max_iter=16, init='kmc2', return_sse=False):
+def kmeans(X, k, max_iter=16, return_sse=False):
     X = X.astype(np.float32)
+
+    print("Run kmeans")
 
     # handle fewer nonzero rows than centroids (mostly just don't choke
     # if X all zeros, which happens when run in PQ with tiny subspaces)
@@ -198,33 +198,8 @@ def kmeans(X, k, max_iter=16, init='kmc2', return_sse=False):
             return centroids, labels, 0
         return centroids, labels
 
-    # if k is huge, initialize centers with cartesian product of centroids
-    # in two subspaces
-    sqrt_k = int(np.ceil(np.sqrt(k)))
-    if k >= 16 and init == 'subspaces':
-        print("kmeans: clustering in subspaces first; k, sqrt(k) ="
-              " {}, {}".format(k, sqrt_k))
-        _, D = X.shape
-        centroids0, _ = kmeans(X[:, :D/2], sqrt_k, max_iter=1)
-        centroids1, _ = kmeans(X[:, D/2:], sqrt_k, max_iter=1)
-        seeds = np.empty((sqrt_k * sqrt_k, D), dtype=np.float32)
-        for i in range(sqrt_k):
-            for j in range(sqrt_k):
-                row = i * sqrt_k + j
-                seeds[row, :D/2] = centroids0[i]
-                seeds[row, D/2:] = centroids1[j]
-        seeds = seeds[:k]  # rounded up sqrt(k), so probably has extra rows
-    elif init == 'kmc2':
-        try:
-            seeds = kmc2.kmc2(X, k).astype(np.float32)
-        except ValueError:  # can happen if dist of 0 to centroid
-            print("WARNING: couldn't use kmc2 initialization")
-            seeds = 'k-means++' if k < max_iter else 'random'
-    else:
-        raise ValueError("init parameter must be one of {'kmc2', 'subspaces'}")
-
     est = cluster.MiniBatchKMeans(
-        k, init=seeds, max_iter=max_iter, n_init=1).fit(X)
+        k, max_iter=max_iter, n_init=1).fit(X)
     if return_sse:
         return est.cluster_centers_, est.labels_, est.inertia_
     return est.cluster_centers_, est.labels_

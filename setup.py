@@ -151,7 +151,6 @@ setup(
     install_requires=[
         'numpy',
         'scikit-learn',
-        #'kmc2'
         # 'sphinx_rtd_theme'  # for docs
     ],
     extras_require={

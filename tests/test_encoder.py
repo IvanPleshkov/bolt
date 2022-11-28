@@ -305,3 +305,44 @@ def test_basic():
 
 if __name__ == '__main__':
     test_basic()
+
+def test_large_data():  # mostly to verify readme code
+    print("Start test!")
+    np.set_printoptions(formatter={'float_kind': _fmt_float})
+
+    Nqueries = 10
+    Ntrain=10000
+    Ntest=10000
+    D=32
+    #accuracy='high'
+    accuracy='medium'
+    enc = bolt.Encoder(accuracy=accuracy, reduction=bolt.Reductions.DOT_PRODUCT)
+    X = np.random.randn(Ntest, D)
+    #X_train_choice = np.random.choice(Ntest, Ntrain, replace=False)
+    #X_train = X[X_train_choice, :]
+    X_train = X
+    Q = np.random.randn(Nqueries, D)
+    t_train = timeit.Timer(lambda: [enc.fit(X_train, just_train=True)]).timeit(1)
+    print("LARGE train time: {}ms".format(t_train * 1000))
+    enc.set_data(X)
+
+    # massive space savings
+    print("LARGE original space usage: {}B".format(X.nbytes))  # 1777 * 64 * 8B = 909KB
+    print("LARGE bolt space usage: {}B".format(enc.nbytes))  # 1777 * 2B = 3.55KB
+
+    # massive time savings (~10x here, but often >100x on larger datasets
+    # with less Python overhead; see the Bolt paper)
+    t_np = timeit.Timer(lambda: [np.dot(X, q) for q in Q]).timeit(5)  # ~8ms
+    t_bolt = timeit.Timer(lambda: [enc.transform(q) for q in Q]).timeit(5)  # ~800us
+    print("LARGE Numpy / BLAS time, Bolt time: {:.3f}ms, {:.3f}ms".format(
+        t_np * 1000, t_bolt * 1000))
+
+    dots_true = [np.dot(X, q) for q in Q]
+    dots_bolt = [enc.transform(q, unquantize=True) for q in Q]
+
+    diffs = [true_vals - bolt_vals
+             for true_vals, bolt_vals in zip(dots_true, dots_bolt)]
+    mse = np.mean([np.mean(diff*diff) for diff in diffs])
+    var = np.mean([np.var(true_vals) for true_vals in dots_true])
+    print("LARGE unquantize mse / variance: ", mse / var)
+

@@ -47,13 +47,10 @@ cd cpp/build-bolt
 To build the python package:
 
 ```
-  git submodule update --init # for kmc2
-  
   virtualenv -p $(which python3) venv
   source venv/bin/activate
 
   pip install -r requirements.txt
-  pip install ./third_party/kmc2
   python setup.py install
 ```
   
