@@ -148,7 +148,7 @@ def test_time_space_savings():  # mostly to verify readme code
 
 def test_unquantize():
     X, Q = _load_digits_X_Q(nqueries=20)
-    enc = bolt.Encoder('dot', accuracy='high').fit(X)
+    enc = bolt.Encoder('dot', accuracy='medium').fit(X)
 
     dots_true = [np.dot(X, q) for q in Q]
     dots_bolt = [enc.transform(q, unquantize=True) for q in Q]
@@ -158,13 +158,13 @@ def test_unquantize():
     mse = np.mean([np.mean(diff*diff) for diff in diffs])
     var = np.mean([np.var(true_vals) for true_vals in dots_true])
     print("dot product unquantize mse / variance: ", mse / var)
-    assert (mse / var) < .01
+    assert (mse / var) < .05
 
     # print "true, bolt dot prods"
     # print dots_true[0][:20].astype(np.int32)
     # print dots_bolt[0][:20].astype(np.int32)
 
-    enc = bolt.Encoder('l2', accuracy='high').fit(X)
+    enc = bolt.Encoder('l2', accuracy='medium').fit(X)
     dists_true = [_dists_sq(X, q) for q in Q]
     dists_bolt = [enc.transform(q, unquantize=True) for q in Q]
 
@@ -173,7 +173,7 @@ def test_unquantize():
     mse = np.mean([np.mean(diff*diff) for diff in diffs])
     var = np.mean([np.var(true_vals) for true_vals in dots_true])
     print("squared l2 unquantize mse / variance: ", mse / var)
-    assert (mse / var) < .01
+    assert (mse / var) < .07
 
 
 def test_basic():
